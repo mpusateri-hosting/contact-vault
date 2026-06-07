@@ -167,8 +167,8 @@
   .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
   .text-muted { color: var(--text3); font-size: 13px; }
   .footer { text-align: center; padding: 24px 16px; font-size: 11px; color: var(--text3); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px; border-top: 1px solid var(--border); margin-top: 20px; }
-
-</style>
+  .hidden { display: none !important; }
+</style></style>
 </head>
 <body>
 
@@ -366,7 +366,14 @@
 <div id="tab-dev" class="main hidden dev-panel">
   <div class="card">
     <div class="card-title">⚙️ Configuration</div>
-    <p class="text-muted">The Anthropic API key is stored securely as a Netlify environment variable. No configuration needed here.</p>
+    <div class="section-header">Anthropic</div>
+    <div class="form-group">
+      <label class="form-label">API Key</label>
+      <input class="form-input" id="cfgAnthropicKey" type="password" placeholder="sk-ant-...">
+      <div class="config-status" id="statusAnthropicKey"></div>
+    </div>
+    <hr class="divider">
+    <button class="btn btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
   </div>
   <div class="card" style="margin-top:16px">
     <div class="card-title">📊 Database Stats</div>
@@ -669,6 +676,7 @@ var SYSTEM_PROMPT = 'You are a contact data extraction assistant. Extract contac
 function extractFromText() {
   var text = document.getElementById('textInput').value.trim();
   if (!text) { showToast('Paste some text first','warning'); return; }
+  if (!anthropicKey) { showToast('Add Anthropic API key in Dev panel','error'); return; }
   setExtracting(true,'text');
   callClaude([{role:'user', content:'Extract contact info from this text:\n\n' + text}], null, null, function(result, err) {
     setExtracting(false,'text');
@@ -679,6 +687,7 @@ function extractFromText() {
 
 function extractFromImage() {
   if (!selectedImageData) { showToast('Select an image first','warning'); return; }
+  if (!anthropicKey) { showToast('Add Anthropic API key in Dev panel','error'); return; }
   setExtracting(true,'image');
   callClaude(null, selectedImageData, selectedImageType, function(result, err) {
     setExtracting(false,'image');
@@ -698,9 +707,9 @@ function callClaude(messages, imageData, imageType, cb) {
   } else {
     payload = { model:'claude-sonnet-4-5', max_tokens:1000, system:SYSTEM_PROMPT, messages:messages };
   }
-  fetch('/.netlify/functions/claude', {
+  fetch('https://api.anthropic.com/v1/messages', {
     method:'POST',
-    headers:{ 'Content-Type':'application/json' },
+    headers:{ 'Content-Type':'application/json', 'x-api-key': anthropicKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-allow-browser':'true' },
     body:JSON.stringify(payload)
   })
   .then(function(r){return r.json();})
@@ -1093,7 +1102,11 @@ function loadDevConfig() {
 function saveConfig() {
   anthropicKey = document.getElementById('cfgAnthropicKey').value.trim();
   localStorage.setItem(ANTHROPIC_KEY_STORAGE, anthropicKey);
-  window.anthropicKey = anthropicKey;
+  var el = document.getElementById('statusAnthropicKey');
+  el.textContent = anthropicKey ? '✓ Set' : '○ Not set';
+  el.className = 'config-status ' + (anthropicKey ? 'ok' : 'missing');
+  showToast('Configuration saved ✓','success');
+}
   var el = document.getElementById('statusAnthropicKey');
   el.textContent = anthropicKey ? '✓ Set' : '○ Not set';
   el.className = 'config-status ' + (anthropicKey ? 'ok' : 'missing');
