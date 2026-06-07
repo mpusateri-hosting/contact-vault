@@ -1107,11 +1107,6 @@ function saveConfig() {
   el.className = 'config-status ' + (anthropicKey ? 'ok' : 'missing');
   showToast('Configuration saved ✓','success');
 }
-  var el = document.getElementById('statusAnthropicKey');
-  el.textContent = anthropicKey ? '✓ Set' : '○ Not set';
-  el.className = 'config-status ' + (anthropicKey ? 'ok' : 'missing');
-  showToast('Configuration saved ✓','success');
-}
 
 function renderDevStats() {
   var el = document.getElementById('devStats');
