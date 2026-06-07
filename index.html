@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Contact Vault</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --bg4: #1e2d45;
+    --border: #1e3a5f;
+    --border2: #2a4a7a;
+    --blue: #2563eb;
+    --blue-bright: #3b82f6;
+    --blue-light: #60a5fa;
+    --blue-glow: rgba(37,99,235,0.25);
+    --text: #e8edf5;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --orange: #f97316;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; min-height: 100vh; overflow-x: hidden; }
+
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header-logo { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 1px; color: var(--text); }
+  .header-logo span { color: var(--blue-bright); }
+  .header-count { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; color: var(--text3); letter-spacing: 0.5px; }
+
+  .nav { background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-tab { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 12px 20px; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none; }
+  .nav-tab:hover { color: var(--text2); }
+  .nav-tab.active { color: var(--blue-bright); border-bottom-color: var(--blue-bright); }
+
+  .main { padding: 20px 16px; max-width: 900px; margin: 0 auto; }
+
+  .btn { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; padding: 10px 20px; border-radius: var(--radius); border: none; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:hover { background: var(--blue-bright); box-shadow: 0 0 16px var(--blue-glow); }
+  .btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+  .btn-secondary:hover { background: var(--bg4); color: var(--text); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn-success { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+  .btn-success:hover { background: rgba(34,197,94,0.25); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-icon { padding: 8px; min-width: 36px; justify-content: center; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); margin-bottom: 5px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; padding: 10px 12px; transition: border-color 0.2s; -webkit-appearance: none; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.5px; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-header { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue-light); margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+  .capture-mode-toggle { display: flex; background: var(--bg3); border-radius: var(--radius); padding: 3px; margin-bottom: 16px; border: 1px solid var(--border); }
+  .mode-btn { flex: 1; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; padding: 8px; border-radius: 6px; border: none; background: none; color: var(--text3); cursor: pointer; transition: all 0.2s; }
+  .mode-btn.active { background: var(--blue); color: #fff; }
+
+  .drop-zone { border: 2px dashed var(--border2); border-radius: var(--radius-lg); padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--bg3); position: relative; }
+  .drop-zone:hover, .drop-zone.dragover { border-color: var(--blue); background: rgba(37,99,235,0.08); }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-zone-icon { font-size: 36px; margin-bottom: 10px; }
+  .drop-zone-text { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
+  .drop-zone-sub { font-size: 13px; color: var(--text3); }
+  .drop-zone-preview { max-width: 100%; max-height: 200px; border-radius: var(--radius); margin-top: 12px; }
+
+  .extract-area { margin-top: 16px; display: flex; gap: 10px; align-items: center; }
+  .extract-spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .preview-card { background: var(--bg2); border: 1px solid var(--blue); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; box-shadow: 0 0 20px var(--blue-glow); display: none; }
+  .preview-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .preview-name { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; color: var(--text); }
+  .preview-title-company { font-size: 14px; color: var(--text2); margin-top: 2px; }
+  .preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  @media (max-width: 500px) { .preview-grid { grid-template-columns: 1fr; } }
+
+  .dupe-warning { background: rgba(234,179,8,0.12); border: 1px solid rgba(234,179,8,0.4); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 14px; display: none; }
+  .dupe-warning-title { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; color: var(--yellow); margin-bottom: 4px; }
+  .dupe-warning-text { font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+  .dupe-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .search-bar { display: flex; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .search-bar .form-input { flex: 1; }
+
+  .contacts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  @media (max-width: 600px) { .contacts-grid { grid-template-columns: 1fr; } }
+
+  .contact-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; transition: all 0.2s; cursor: pointer; }
+  .contact-card:hover { border-color: var(--border2); box-shadow: 0 4px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
+  .contact-card-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 10px; flex-shrink: 0; }
+  .contact-card-top { display: flex; align-items: flex-start; gap: 12px; }
+  .contact-card-info { flex: 1; min-width: 0; }
+  .contact-card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .contact-card-title { font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .contact-card-company { font-size: 13px; color: var(--blue-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .contact-card-email { font-size: 12px; color: var(--text3); margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .contact-card-actions { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+  .detail-view { display: none; }
+  .detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .detail-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .detail-name { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 700; color: var(--text); }
+  .detail-subtitle { font-size: 14px; color: var(--text2); }
+  .detail-field { margin-bottom: 14px; }
+  .detail-field-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 3px; }
+  .detail-field-value { font-size: 15px; color: var(--text); word-break: break-word; }
+  .detail-field-value a { color: var(--blue-light); text-decoration: none; }
+  .detail-field-value a:hover { text-decoration: underline; }
+  .detail-meta { font-size: 12px; color: var(--text3); margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+  @media (max-width: 500px) { .detail-grid { grid-template-columns: 1fr; } }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state-text { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); padding: 12px 20px; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.3px; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 999; transition: transform 0.3s ease; max-width: calc(100vw - 40px); text-align: center; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+  .toast.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+  .toast.warning { border-color: rgba(234,179,8,0.4); color: var(--yellow); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-lg); padding: 28px; width: 100%; max-width: 360px; }
+  .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+  .pin-dots { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--border2); transition: background 0.2s; }
+  .pin-dot.filled { background: var(--blue-bright); }
+  .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .pin-key { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 600; color: var(--text); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .pin-key:hover { background: var(--bg4); border-color: var(--border2); }
+  .pin-key:active { transform: scale(0.95); }
+
+  .dev-panel { }
+  .config-status { font-size: 12px; margin-top: 4px; }
+  .config-status.ok { color: var(--green); }
+  .config-status.missing { color: var(--text3); }
+
+  .loading-overlay { position: fixed; inset: 0; background: rgba(10,14,26,0.8); display: none; align-items: center; justify-content: center; z-index: 300; flex-direction: column; gap: 16px; }
+  .loading-overlay.show { display: flex; }
+  .loading-spinner { width: 40px; height: 40px; border: 3px solid var(--border2); border-top-color: var(--blue-bright); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .loading-text { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 0.5px; color: var(--text2); }
+
+  .tag { display: inline-block; background: rgba(37,99,235,0.15); border: 1px solid rgba(37,99,235,0.3); color: var(--blue-light); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .text-muted { color: var(--text3); font-size: 13px; }
+  .footer { text-align: center; padding: 24px 16px; font-size: 11px; color: var(--text3); font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px; border-top: 1px solid var(--border); margin-top: 20px; }
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">CONTACT<span>VAULT</span></div>
+  <div class="header-count" id="headerCount">— contacts</div>
+</div>
+
+<div class="nav">
+  <button class="nav-tab active" onclick="showTab('capture')">📥 Capture</button>
+  <button class="nav-tab" onclick="showTab('contacts')">📋 Contacts</button>
+  <button class="nav-tab" onclick="showTab('export')">📤 Export</button>
+  <button class="nav-tab" onclick="requestDevPanel()">⚙️ Dev</button>
+</div>
+
+<!-- ═══ CAPTURE ═══ -->
+<div id="tab-capture" class="main">
+  <div class="capture-mode-toggle">
+    <button class="mode-btn active" id="modeTextBtn" onclick="setMode('text')">📝 Paste Text</button>
+    <button class="mode-btn" id="modeImageBtn" onclick="setMode('image')">📷 Photo / Image</button>
+    <button class="mode-btn" id="modeBulkBtn" onclick="setMode('bulk')">📊 Bulk Upload</button>
+  </div>
+
+  <!-- TEXT -->
+  <div id="modeText">
+    <div class="card">
+      <div class="card-title">Paste Contact Info</div>
+      <div class="form-group">
+        <label class="form-label">Email signature, text, or any contact block</label>
+        <textarea class="form-textarea" id="textInput" rows="7" placeholder="Paste anything here — email signature, LinkedIn bio, email body with contact info..."></textarea>
+      </div>
+      <div class="extract-area">
+        <button class="btn btn-primary" id="extractTextBtn" onclick="extractFromText()">
+          <div class="extract-spinner" id="textSpinner"></div>
+          ⚡ Extract Contact
+        </button>
+        <span class="text-muted" id="textStatus"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMAGE -->
+  <div id="modeImage" class="hidden">
+    <div class="card">
+      <div class="card-title">Photo or Screenshot</div>
+      <div class="drop-zone" id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <input type="file" id="imageInput" accept="image/*" onchange="handleImageSelect(event)">
+        <div class="drop-zone-icon">📷</div>
+        <div class="drop-zone-text">Tap to take photo or choose image</div>
+        <div class="drop-zone-sub">Business card, screenshot, any image</div>
+        <img id="imagePreview" class="drop-zone-preview hidden">
+      </div>
+      <div class="extract-area" style="margin-top:14px">
+        <button class="btn btn-primary" id="extractImageBtn" onclick="extractFromImage()" disabled>
+          <div class="extract-spinner" id="imageSpinner"></div>
+          ⚡ Extract Contact
+        </button>
+        <span class="text-muted" id="imageStatus"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BULK -->
+  <div id="modeBulk" class="hidden">
+    <div class="card">
+      <div class="card-title">Bulk Import from Excel / CSV</div>
+      <p class="text-muted" style="margin-bottom:14px">Upload a spreadsheet with contact data. Map columns on the next step.</p>
+      <div class="drop-zone">
+        <input type="file" id="bulkInput" accept=".xlsx,.xls,.csv" onchange="handleBulkSelect(event)">
+        <div class="drop-zone-icon">📊</div>
+        <div class="drop-zone-text">Tap to choose Excel or CSV file</div>
+        <div class="drop-zone-sub">.xlsx, .xls, .csv</div>
+      </div>
+      <div id="bulkMapArea" class="hidden" style="margin-top:16px"></div>
+    </div>
+  </div>
+
+  <!-- DUPE WARNING -->
+  <div class="dupe-warning" id="dupeWarning">
+    <div class="dupe-warning-title">⚠️ Possible Duplicate</div>
+    <div class="dupe-warning-text" id="dupeWarningText"></div>
+    <div class="dupe-actions">
+      <button class="btn btn-sm btn-secondary" onclick="saveDupeUpdate()">Update Existing</button>
+      <button class="btn btn-sm btn-secondary" onclick="saveDupeBoth()">Keep Both</button>
+      <button class="btn btn-sm btn-danger" onclick="discardDupe()">Discard New</button>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-card" id="previewCard">
+    <div class="preview-header">
+      <div>
+        <div class="preview-name" id="previewName">—</div>
+        <div class="preview-title-company" id="previewSub">—</div>
+      </div>
+      <span class="tag" id="previewSource">Text</span>
+    </div>
+    <div class="section-header">Review & Edit Before Saving</div>
+    <div class="preview-grid">
+      <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="pFirstName" type="text"></div>
+      <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="pLastName" type="text"></div>
+      <div class="form-group"><label class="form-label">Company</label><input class="form-input" id="pCompany" type="text"></div>
+      <div class="form-group"><label class="form-label">Title</label><input class="form-input" id="pTitle" type="text"></div>
+      <div class="form-group"><label class="form-label">Industry</label><input class="form-input" id="pIndustry" type="text"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="pEmail" type="email"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="pPhone" type="tel"></div>
+      <div class="form-group"><label class="form-label">Website</label><input class="form-input" id="pWebsite" type="text"></div>
+      <div class="form-group"><label class="form-label">LinkedIn</label><input class="form-input" id="pLinkedin" type="text"></div>
+      <div class="form-group">
+        <label class="form-label">How Met</label>
+        <select class="form-select" id="pHowMet" onchange="toggleHowMetOther()">
+          <option value="">— Select —</option>
+          <option value="Email signature">Email signature</option>
+          <option value="Business card">Business card</option>
+          <option value="Trade show / conference">Trade show / conference</option>
+          <option value="Referral">Referral</option>
+          <option value="LinkedIn">LinkedIn</option>
+          <option value="Phone call">Phone call</option>
+          <option value="In-person meeting">In-person meeting</option>
+          <option value="Customer / prospect">Customer / prospect</option>
+          <option value="Vendor / supplier">Vendor / supplier</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" id="howMetOtherGroup" style="display:none">
+      <label class="form-label">Describe How You Met</label>
+      <input class="form-input" id="pHowMetOther" type="text" placeholder="e.g. Met at MODEX 2025 in Atlanta">
+    </div>
+    <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="pAddress" type="text"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="pNotes" rows="3" placeholder="Anything else worth remembering..."></textarea></div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px">
+      <button class="btn btn-success" id="saveBtn" onclick="saveContact()">✅ Save Contact</button>
+      <button class="btn btn-secondary" onclick="discardPreview()">✕ Discard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONTACTS ═══ -->
+<div id="tab-contacts" class="main hidden">
+  <div id="listView">
+    <div class="search-bar">
+      <input class="form-input" id="searchInput" type="text" placeholder="Search name, company, email..." oninput="renderContactList()">
+      <select class="form-select" id="sortSelect" onchange="renderContactList()" style="width:auto;min-width:130px">
+        <option value="date_desc">Newest First</option>
+        <option value="date_asc">Oldest First</option>
+        <option value="name_asc">Name A–Z</option>
+        <option value="name_desc">Name Z–A</option>
+        <option value="company_asc">Company A–Z</option>
+      </select>
+    </div>
+    <div id="contactsGrid" class="contacts-grid"></div>
+  </div>
+  <div id="detailView" class="detail-view">
+    <div style="margin-bottom:16px"><button class="btn btn-secondary btn-sm" onclick="closeDetail()">← Back</button></div>
+    <div class="card">
+      <div class="detail-header">
+        <div class="detail-avatar" id="detailAvatar">??</div>
+        <div><div class="detail-name" id="detailName">—</div><div class="detail-subtitle" id="detailSubtitle">—</div></div>
+      </div>
+      <div class="detail-grid">
+        <div id="dfEmail" class="detail-field hidden"><div class="detail-field-label">Email</div><div class="detail-field-value" id="dvEmail"></div></div>
+        <div id="dfPhone" class="detail-field hidden"><div class="detail-field-label">Phone</div><div class="detail-field-value" id="dvPhone"></div></div>
+        <div id="dfCompany" class="detail-field hidden"><div class="detail-field-label">Company</div><div class="detail-field-value" id="dvCompany"></div></div>
+        <div id="dfTitle" class="detail-field hidden"><div class="detail-field-label">Title</div><div class="detail-field-value" id="dvTitle"></div></div>
+        <div id="dfIndustry" class="detail-field hidden"><div class="detail-field-label">Industry</div><div class="detail-field-value" id="dvIndustry"></div></div>
+        <div id="dfWebsite" class="detail-field hidden"><div class="detail-field-label">Website</div><div class="detail-field-value" id="dvWebsite"></div></div>
+        <div id="dfLinkedin" class="detail-field hidden"><div class="detail-field-label">LinkedIn</div><div class="detail-field-value" id="dvLinkedin"></div></div>
+        <div id="dfHowMet" class="detail-field hidden"><div class="detail-field-label">How Met</div><div class="detail-field-value" id="dvHowMet"></div></div>
+      </div>
+      <div id="dfAddress" class="detail-field hidden"><div class="detail-field-label">Address</div><div class="detail-field-value" id="dvAddress"></div></div>
+      <div id="dfNotes" class="detail-field hidden"><div class="detail-field-label">Notes</div><div class="detail-field-value" id="dvNotes"></div></div>
+      <div class="detail-meta" id="detailMeta"></div>
+      <hr class="divider">
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="editContact()">✏️ Edit</button>
+        <button class="btn btn-success btn-sm" onclick="downloadVCard()">📇 Add to Contacts</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteContact()">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXPORT ═══ -->
+<div id="tab-export" class="main hidden">
+  <div class="card">
+    <div class="card-title">📤 Export All Contacts</div>
+    <p class="text-muted" style="margin-bottom:20px">Downloads your complete contact database as a formatted Excel file with all fields and column headers.</p>
+    <div id="exportStats" style="margin-bottom:20px"></div>
+    <button class="btn btn-primary" onclick="exportToExcel()">⬇️ Download Excel File</button>
+  </div>
+</div>
+
+<!-- ═══ DEV PANEL ═══ -->
+<div id="tab-dev" class="main hidden dev-panel">
+  <div class="card">
+    <div class="card-title">⚙️ Configuration</div>
+    <p class="text-muted">The Anthropic API key is stored securely as a Netlify environment variable. No configuration needed here.</p>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">📊 Database Stats</div>
+    <div id="devStats" class="text-muted">Loading...</div>
+  </div>
+  <div class="card" style="margin-top:16px; border-color: rgba(239,68,68,0.3)">
+    <div class="card-title" style="color:var(--red)">⚠️ Danger Zone</div>
+    <p class="text-muted" style="margin-bottom:14px">Permanently delete all contacts. Cannot be undone.</p>
+    <button class="btn btn-danger" onclick="nukeDatabase()">🗑️ Delete All Contacts</button>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="modal-overlay" id="pinModal">
+  <div class="modal">
+    <div class="modal-title">🔒 Developer Access</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot0"></div><div class="pin-dot" id="dot1"></div>
+      <div class="pin-dot" id="dot2"></div><div class="pin-dot" id="dot3"></div>
+    </div>
+    <div class="pin-grid" id="pinGrid"></div>
+    <div style="margin-top:14px; text-align:center">
+      <button class="btn btn-secondary btn-sm" onclick="closePinModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Processing...</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- FOOTER -->
+<div class="footer">© 2026 Michael Pusateri &nbsp;·&nbsp; Contact Vault v1.0 &nbsp;·&nbsp; June 2026</div>
+
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+var firebaseConfig = {
+  apiKey: "AIzaSyC6ARAfGyZvusZYKdUlwCeezgudlwYHJl8",
+  authDomain: "contact-vault-62fd6.firebaseapp.com",
+  projectId: "contact-vault-62fd6",
+  storageBucket: "contact-vault-62fd6.firebasestorage.app",
+  messagingSenderId: "146990008246",
+  appId: "1:146990008246:web:56d7cd3435722de2546317"
+};
+
+var app = initializeApp(firebaseConfig);
+var db = getFirestore(app);
+var contactsRef = collection(db, 'contacts');
+
+// Expose DB functions to global scope
+window._fbAdd = function(data, cb) {
+  data.date_added = serverTimestamp();
+  data.last_updated = serverTimestamp();
+  addDoc(contactsRef, data)
+    .then(function() { cb(null); })
+    .catch(function(e) { cb(e.message); });
+};
+
+window._fbUpdate = function(id, data, cb) {
+  data.last_updated = serverTimestamp();
+  updateDoc(doc(db, 'contacts', id), data)
+    .then(function() { cb(null); })
+    .catch(function(e) { cb(e.message); });
+};
+
+window._fbDelete = function(id, cb) {
+  deleteDoc(doc(db, 'contacts', id))
+    .then(function() { cb(null); })
+    .catch(function(e) { cb(e.message); });
+};
+
+window._fbDeleteAll = function(cb) {
+  getDocs(contactsRef).then(function(snap) {
+    var promises = [];
+    snap.forEach(function(d) { promises.push(deleteDoc(d.ref)); });
+    return Promise.all(promises);
+  }).then(function() { cb(null); }).catch(function(e) { cb(e.message); });
+};
+
+window._fbLoad = function(cb) {
+  getDocs(contactsRef)
+    .then(function(snap) {
+      var rows = [];
+      snap.forEach(function(d) {
+        var data = d.data();
+        data.id = d.id;
+        // Convert Firestore timestamps to JS dates
+        if (data.date_added && data.date_added.toDate) data.date_added = data.date_added.toDate().toISOString();
+        if (data.last_updated && data.last_updated.toDate) data.last_updated = data.last_updated.toDate().toISOString();
+        rows.push(data);
+      });
+      cb(rows, null);
+    })
+    .catch(function(e) { cb(null, e.message); });
+};
+
+window._fbCheckEmail = function(email, cb) {
+  var q = query(contactsRef, where('email', '==', email.toLowerCase().trim()));
+  getDocs(q).then(function(snap) {
+    if (snap.empty) { cb(null); return; }
+    var d = snap.docs[0];
+    var data = d.data(); data.id = d.id;
+    cb(data);
+  }).catch(function() { cb(null); });
+};
+
+window._fbCheckName = function(lastName, company, cb) {
+  var q = query(contactsRef, where('last_name_lc', '==', lastName.toLowerCase().trim()));
+  getDocs(q).then(function(snap) {
+    var match = null;
+    snap.forEach(function(d) {
+      var data = d.data();
+      if (!match && data.company && company && data.company.toLowerCase() === company.toLowerCase()) {
+        data.id = d.id; match = data;
+      }
+    });
+    cb(match);
+  }).catch(function() { cb(null); });
+};
+
+window._fbReady = true;
+window.dispatchEvent(new Event('fbready'));
+</script>
+
+<script>
+'use strict';
+
+var allContacts = [];
+var currentContact = null;
+var pendingExtracted = null;
+var pendingDupe = null;
+var currentMode = 'text';
+var selectedImageData = null;
+var selectedImageType = null;
+var devUnlocked = false;
+var pinBuffer = '';
+var toastTimer = null;
+var fbReady = false;
+
+var ANTHROPIC_KEY_STORAGE = 'cv_ant_key';
+var anthropicKey = localStorage.getItem(ANTHROPIC_KEY_STORAGE) || '';
+
+// Wait for Firebase then load
+window.addEventListener('fbready', function() {
+  fbReady = true;
+  loadContacts();
+});
+
+buildPinGrid();
+
+// ─── TABS ───
+function showTab(tab) {
+  var tabs = ['capture','contacts','export','dev'];
+  tabs.forEach(function(t) {
+    var el = document.getElementById('tab-' + t);
+    if (el) el.classList.toggle('hidden', t !== tab);
+  });
+  document.querySelectorAll('.nav-tab').forEach(function(btn, i) {
+    btn.classList.toggle('active', i === tabs.indexOf(tab));
+  });
+  if (tab === 'contacts') renderContactList();
+  if (tab === 'export') renderExportStats();
+  if (tab === 'dev') renderDevStats();
+}
+
+function requestDevPanel() {
+  if (devUnlocked) { showTab('dev'); loadDevConfig(); }
+  else openPinModal();
+}
+
+// ─── PIN ───
+function buildPinGrid() {
+  var grid = document.getElementById('pinGrid');
+  var keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  grid.innerHTML = '';
+  keys.forEach(function(k) {
+    var btn = document.createElement('button');
+    btn.className = 'pin-key';
+    btn.textContent = k;
+    if (k === '') { btn.style.visibility = 'hidden'; }
+    else if (k === '⌫') { btn.onclick = pinBackspace; }
+    else { btn.onclick = function() { pinPress(k); }; }
+    grid.appendChild(btn);
+  });
+}
+
+function openPinModal() { pinBuffer = ''; updatePinDots(); document.getElementById('pinModal').classList.add('show'); }
+function closePinModal() { pinBuffer = ''; updatePinDots(); document.getElementById('pinModal').classList.remove('show'); }
+function pinPress(d) { if (pinBuffer.length >= 4) return; pinBuffer += d; updatePinDots(); if (pinBuffer.length === 4) setTimeout(checkPin, 200); }
+function pinBackspace() { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); }
+function updatePinDots() { for (var i=0;i<4;i++) document.getElementById('dot'+i).classList.toggle('filled', i < pinBuffer.length); }
+function checkPin() {
+  if (pinBuffer === '5411') { devUnlocked = true; closePinModal(); showTab('dev'); loadDevConfig(); }
+  else { pinBuffer = ''; updatePinDots(); showToast('Incorrect PIN','error'); }
+}
+
+// ─── MODE ───
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('modeText').classList.toggle('hidden', m !== 'text');
+  document.getElementById('modeImage').classList.toggle('hidden', m !== 'image');
+  document.getElementById('modeBulk').classList.toggle('hidden', m !== 'bulk');
+  document.getElementById('modeTextBtn').classList.toggle('active', m === 'text');
+  document.getElementById('modeImageBtn').classList.toggle('active', m === 'image');
+  document.getElementById('modeBulkBtn').classList.toggle('active', m === 'bulk');
+  hidePreview();
+}
+
+// ─── IMAGE ───
+function handleImageSelect(e) { var f = e.target.files[0]; if (f) loadImageFile(f); }
+function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+function handleDragLeave() { document.getElementById('dropZone').classList.remove('dragover'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('dragover'); var f = e.dataTransfer.files[0]; if (f && f.type.match(/image\//)) loadImageFile(f); }
+
+function loadImageFile(file) {
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    selectedImageData = dataUrl.split(',')[1];
+    selectedImageType = file.type;
+    var preview = document.getElementById('imagePreview');
+    preview.src = dataUrl; preview.classList.remove('hidden');
+    document.getElementById('extractImageBtn').disabled = false;
+    document.getElementById('imageStatus').textContent = file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ─── BULK ───
+var bulkRows = [];
+var bulkFields = ['first_name','last_name','company','title','industry','email','phone','website','linkedin','address','notes'];
+var bulkLabels = ['First Name','Last Name','Company','Title','Industry','Email','Phone','Website','LinkedIn','Address','Notes'];
+
+function handleBulkSelect(e) {
+  var file = e.target.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var wb = XLSX.read(ev.target.result, { type:'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+      if (!rows.length) { showToast('No data found','error'); return; }
+      showBulkMapper(rows, Object.keys(rows[0]));
+    } catch(e) { showToast('Could not read file','error'); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showBulkMapper(rows, headers) {
+  bulkRows = rows;
+  var area = document.getElementById('bulkMapArea');
+  var html = '<div class="section-header">Map Columns</div>';
+  html += '<p class="text-muted" style="margin-bottom:12px">Found ' + rows.length + ' rows. Match your columns to contact fields.</p>';
+  bulkFields.forEach(function(f, i) {
+    html += '<div class="form-group"><label class="form-label">' + bulkLabels[i] + '</label><select class="form-select" id="bmap_' + f + '"><option value="">— skip —</option>';
+    headers.forEach(function(h) {
+      var sel = (h.toLowerCase().replace(/[\s_]/g,'').indexOf(f.replace('_','')) >= 0) ? ' selected' : '';
+      html += '<option value="' + esc(h) + '"' + sel + '>' + esc(h) + '</option>';
+    });
+    html += '</select></div>';
+  });
+  html += '<button class="btn btn-primary" onclick="runBulkImport()" style="margin-top:8px">📥 Import ' + rows.length + ' Contacts</button>';
+  area.innerHTML = html;
+  area.classList.remove('hidden');
+}
+
+function runBulkImport() {
+  var mapping = {};
+  bulkFields.forEach(function(f) { var s = document.getElementById('bmap_' + f); if (s && s.value) mapping[f] = s.value; });
+  showLoading('Importing contacts...');
+  var imported = 0, skipped = 0, idx = 0;
+  function next() {
+    if (idx >= bulkRows.length) { hideLoading(); showToast('Imported ' + imported + ', skipped ' + skipped,'success'); loadContacts(); return; }
+    var row = bulkRows[idx++];
+    var contact = {};
+    bulkFields.forEach(function(f) { contact[f] = mapping[f] ? String(row[mapping[f]]||'').trim() : ''; });
+    contact.source = 'Bulk Import';
+    if (!contact.first_name && !contact.last_name && !contact.email) { skipped++; next(); return; }
+    if (contact.email) contact.email = contact.email.toLowerCase();
+    contact.last_name_lc = (contact.last_name||'').toLowerCase();
+    window._fbCheckEmail(contact.email || '', function(dupe) {
+      if (dupe) { skipped++; next(); return; }
+      window._fbAdd(contact, function(err) { if (err) skipped++; else imported++; next(); });
+    });
+  }
+  next();
+}
+
+// ─── CLAUDE EXTRACTION ───
+var SYSTEM_PROMPT = 'You are a contact data extraction assistant. Extract contact information and return ONLY a valid JSON object with these exact keys: first_name, last_name, company, title, industry, email, phone, website, linkedin, address, notes. If a field is not found use an empty string. Do not include any explanation, markdown, or text outside the JSON object.';
+
+function extractFromText() {
+  var text = document.getElementById('textInput').value.trim();
+  if (!text) { showToast('Paste some text first','warning'); return; }
+  setExtracting(true,'text');
+  callClaude([{role:'user', content:'Extract contact info from this text:\n\n' + text}], null, null, function(result, err) {
+    setExtracting(false,'text');
+    if (err) { showToast('Extraction failed: ' + err,'error'); return; }
+    showPreview(result, 'Email Signature');
+  });
+}
+
+function extractFromImage() {
+  if (!selectedImageData) { showToast('Select an image first','warning'); return; }
+  setExtracting(true,'image');
+  callClaude(null, selectedImageData, selectedImageType, function(result, err) {
+    setExtracting(false,'image');
+    if (err) { showToast('Extraction failed: ' + err,'error'); return; }
+    showPreview(result, 'Business Card');
+  });
+}
+
+function callClaude(messages, imageData, imageType, cb) {
+  anthropicKey = localStorage.getItem(ANTHROPIC_KEY_STORAGE) || anthropicKey;
+  var payload;
+  if (imageData) {
+    payload = { model:'claude-sonnet-4-5', max_tokens:1000, system:SYSTEM_PROMPT, messages:[{ role:'user', content:[
+      { type:'image', source:{ type:'base64', media_type: imageType||'image/jpeg', data:imageData }},
+      { type:'text', text:'Extract all contact information from this image.' }
+    ]}]};
+  } else {
+    payload = { model:'claude-sonnet-4-5', max_tokens:1000, system:SYSTEM_PROMPT, messages:messages };
+  }
+  fetch('/.netlify/functions/claude', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body:JSON.stringify(payload)
+  })
+  .then(function(r){return r.json();})
+  .then(function(data) {
+    if (data.error) { cb(null, data.error.message); return; }
+    var text = '';
+    (data.content||[]).forEach(function(b){ if(b.type==='text') text+=b.text; });
+    try { cb(JSON.parse(text.replace(/```json|```/g,'').trim()), null); }
+    catch(e) { cb(null,'Could not parse response'); }
+  })
+  .catch(function(e){ cb(null, e.message); });
+}
+
+function setExtracting(on, type) {
+  var spinner = document.getElementById(type==='text'?'textSpinner':'imageSpinner');
+  var btn = document.getElementById(type==='text'?'extractTextBtn':'extractImageBtn');
+  spinner.style.display = on ? 'block' : 'none';
+  btn.disabled = on;
+}
+
+// ─── PREVIEW ───
+function showPreview(data, source) {
+  pendingExtracted = data;
+  pendingExtracted.source = source;
+  if (source === 'Business Card') data.how_met = 'Business card';
+  else if (source === 'Email Signature') data.how_met = 'Email signature';
+
+  document.getElementById('pFirstName').value = data.first_name||'';
+  document.getElementById('pLastName').value = data.last_name||'';
+  document.getElementById('pCompany').value = data.company||'';
+  document.getElementById('pTitle').value = data.title||'';
+  document.getElementById('pIndustry').value = data.industry||'';
+  document.getElementById('pEmail').value = data.email||'';
+  document.getElementById('pPhone').value = data.phone||'';
+  document.getElementById('pWebsite').value = data.website||'';
+  document.getElementById('pLinkedin').value = data.linkedin||'';
+  document.getElementById('pAddress').value = data.address||'';
+  document.getElementById('pNotes').value = data.notes||'';
+  document.getElementById('pHowMet').value = data.how_met||'';
+  document.getElementById('pHowMetOther').value = '';
+  toggleHowMetOther();
+  updatePreviewHeader();
+  document.getElementById('previewSource').textContent = source;
+  document.getElementById('previewCard').style.display = 'block';
+  document.getElementById('previewCard').scrollIntoView({behavior:'smooth'});
+  document.getElementById('dupeWarning').style.display = 'none';
+
+  // Reset save button
+  var btn = document.getElementById('saveBtn');
+  btn.textContent = '✅ Save Contact';
+  btn.onclick = saveContact;
+
+  var email = (data.email||'').trim().toLowerCase();
+  if (email) {
+    window._fbCheckEmail(email, function(dupe) {
+      if (dupe) showDupeWarning(dupe,'email');
+      else checkDupeName(data, function(d2){ if(d2) showDupeWarning(d2,'name'); });
+    });
+  } else {
+    checkDupeName(data, function(d2){ if(d2) showDupeWarning(d2,'name'); });
+  }
+}
+
+function updatePreviewHeader() {
+  var fn = document.getElementById('pFirstName').value;
+  var ln = document.getElementById('pLastName').value;
+  document.getElementById('previewName').textContent = ((fn+' '+ln).trim())||'—';
+  var title = document.getElementById('pTitle').value;
+  var co = document.getElementById('pCompany').value;
+  document.getElementById('previewSub').textContent = [title,co].filter(Boolean).join(' · ')||'—';
+}
+
+function toggleHowMetOther() {
+  document.getElementById('howMetOtherGroup').style.display = document.getElementById('pHowMet').value === 'Other' ? 'block' : 'none';
+}
+
+function hidePreview() {
+  document.getElementById('previewCard').style.display = 'none';
+  document.getElementById('dupeWarning').style.display = 'none';
+  pendingExtracted = null; pendingDupe = null;
+}
+
+function discardPreview() { hidePreview(); showToast('Discarded','warning'); }
+
+// ─── DUPE ───
+function checkDupeName(data, cb) {
+  var ln = (data.last_name||'').trim();
+  var co = (data.company||'').trim();
+  if (!ln || !co) { cb(null); return; }
+  window._fbCheckName(ln, co, cb);
+}
+
+function showDupeWarning(dupe, matchType) {
+  pendingDupe = dupe;
+  var name = ((dupe.first_name||'')+' '+(dupe.last_name||'')).trim()||'Unknown';
+  var desc = matchType==='email' ? 'same email address' : 'similar name and company';
+  document.getElementById('dupeWarningText').textContent = 'Matches existing contact: ' + name + ' at ' + (dupe.company||'unknown') + ' (' + desc + ')';
+  document.getElementById('dupeWarning').style.display = 'block';
+}
+
+function saveDupeUpdate() {
+  if (!pendingDupe) return;
+  var contact = collectPreviewFields();
+  showLoading('Updating contact...');
+  window._fbUpdate(pendingDupe.id, contact, function(err) {
+    hideLoading();
+    if (err) { showToast('Update failed','error'); return; }
+    showToast('Contact updated ✓','success');
+    hidePreview(); loadContacts();
+  });
+}
+
+function saveDupeBoth() { pendingDupe = null; document.getElementById('dupeWarning').style.display='none'; saveContact(); }
+function discardDupe() { hidePreview(); showToast('Discarded duplicate','warning'); }
+
+// ─── SAVE ───
+function collectPreviewFields() {
+  var howMet = document.getElementById('pHowMet').value;
+  var email = document.getElementById('pEmail').value.trim().toLowerCase();
+  return {
+    first_name: document.getElementById('pFirstName').value.trim(),
+    last_name: document.getElementById('pLastName').value.trim(),
+    last_name_lc: document.getElementById('pLastName').value.trim().toLowerCase(),
+    company: document.getElementById('pCompany').value.trim(),
+    title: document.getElementById('pTitle').value.trim(),
+    industry: document.getElementById('pIndustry').value.trim(),
+    email: email,
+    phone: document.getElementById('pPhone').value.trim(),
+    website: document.getElementById('pWebsite').value.trim(),
+    linkedin: document.getElementById('pLinkedin').value.trim(),
+    address: document.getElementById('pAddress').value.trim(),
+    how_met: howMet,
+    how_met_other: howMet==='Other' ? document.getElementById('pHowMetOther').value.trim() : '',
+    notes: document.getElementById('pNotes').value.trim(),
+    source: (pendingExtracted && pendingExtracted.source)||'Manual'
+  };
+}
+
+function saveContact() {
+  var contact = collectPreviewFields();
+  if (!contact.first_name && !contact.last_name && !contact.email) { showToast('Need at least a name or email','warning'); return; }
+  showLoading('Saving contact...');
+  window._fbAdd(contact, function(err) {
+    hideLoading();
+    if (err) { showToast('Save failed: '+err,'error'); return; }
+    showToast('Contact saved ✓','success');
+    hidePreview();
+    document.getElementById('textInput').value = '';
+    selectedImageData = null; selectedImageType = null;
+    document.getElementById('imagePreview').classList.add('hidden');
+    document.getElementById('extractImageBtn').disabled = true;
+    document.getElementById('imageStatus').textContent = '';
+    loadContacts();
+  });
+}
+
+// ─── LOAD ───
+function loadContacts() {
+  if (!fbReady) return;
+  window._fbLoad(function(rows, err) {
+    if (err) { console.error('Load error:', err); return; }
+    allContacts = rows || [];
+    document.getElementById('headerCount').textContent = allContacts.length + (allContacts.length===1?' contact':' contacts');
+    renderContactList();
+  });
+}
+
+// ─── LIST ───
+function renderContactList() {
+  var grid = document.getElementById('contactsGrid');
+  if (!grid) return;
+  var search = (document.getElementById('searchInput').value||'').toLowerCase();
+  var sort = document.getElementById('sortSelect').value;
+
+  var filtered = allContacts.filter(function(c) {
+    if (!search) return true;
+    var hay = ((c.first_name||'')+' '+(c.last_name||'')+' '+(c.company||'')+' '+(c.email||'')+' '+(c.industry||'')).toLowerCase();
+    return hay.indexOf(search) >= 0;
+  });
+
+  filtered.sort(function(a,b) {
+    if (sort==='name_asc') return ((a.last_name||'')+(a.first_name||'')).localeCompare((b.last_name||'')+(b.first_name||''));
+    if (sort==='name_desc') return ((b.last_name||'')+(b.first_name||'')).localeCompare((a.last_name||'')+(a.first_name||''));
+    if (sort==='company_asc') return (a.company||'').localeCompare(b.company||'');
+    if (sort==='date_asc') return new Date(a.date_added||0) - new Date(b.date_added||0);
+    return new Date(b.date_added||0) - new Date(a.date_added||0);
+  });
+
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">'+(search?'No matches found':'No contacts yet')+'</div><p class="text-muted">'+(search?'Try a different search':'Capture your first contact on the Capture tab')+'</p></div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map(function(c) {
+    var name = ((c.first_name||'')+' '+(c.last_name||'')).trim()||'Unknown';
+    var initials = getInitials(c);
+    var color = getAvatarColor(c.id||name);
+    return '<div class="contact-card" onclick="openDetail(\''+c.id+'\')">'+
+      '<div class="contact-card-top">'+
+      '<div class="contact-card-avatar" style="background:'+color+'">'+initials+'</div>'+
+      '<div class="contact-card-info">'+
+      '<div class="contact-card-name">'+esc(name)+'</div>'+
+      (c.title?'<div class="contact-card-title">'+esc(c.title)+'</div>':'')+
+      (c.company?'<div class="contact-card-company">'+esc(c.company)+'</div>':'')+
+      '</div></div>'+
+      (c.email?'<div class="contact-card-email">✉ '+esc(c.email)+'</div>':'')+
+      '<div class="contact-card-actions" onclick="event.stopPropagation()">'+
+      '<button class="btn btn-secondary btn-sm btn-icon" title="Edit" onclick="openDetailAndEdit(\''+c.id+'\')">✏️</button>'+
+      '<button class="btn btn-success btn-sm btn-icon" title="Add to Contacts" onclick="downloadVCardById(\''+c.id+'\')">📇</button>'+
+      '<button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="deleteById(\''+c.id+'\')">🗑️</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+function getInitials(c) {
+  var f=(c.first_name||'').charAt(0).toUpperCase();
+  var l=(c.last_name||'').charAt(0).toUpperCase();
+  if(f&&l) return f+l; if(f) return f;
+  return c.company ? c.company.charAt(0).toUpperCase() : '?';
+}
+
+var COLORS=['#1d4ed8','#0369a1','#0f766e','#7c3aed','#b45309','#be123c','#0e7490','#4338ca'];
+function getAvatarColor(str) {
+  var h=0; for(var i=0;i<str.length;i++) h=str.charCodeAt(i)+((h<<5)-h);
+  return COLORS[Math.abs(h)%COLORS.length];
+}
+
+// ─── DETAIL ───
+function openDetail(id) {
+  var c = allContacts.find(function(x){return x.id===id;});
+  if (!c) return;
+  currentContact = c;
+  document.getElementById('listView').style.display = 'none';
+  var dv = document.getElementById('detailView');
+  dv.style.display = 'block';
+
+  var name = ((c.first_name||'')+' '+(c.last_name||'')).trim()||'Unknown';
+  document.getElementById('detailAvatar').textContent = getInitials(c);
+  document.getElementById('detailAvatar').style.background = getAvatarColor(c.id||name);
+  document.getElementById('detailName').textContent = name;
+  document.getElementById('detailSubtitle').textContent = [c.title,c.company].filter(Boolean).join(' · ')||'';
+
+  function sf(fId,vId,val,link) {
+    var show = val && val.trim();
+    document.getElementById(fId).classList.toggle('hidden',!show);
+    if(show) document.getElementById(vId).innerHTML = link ? '<a href="'+link+'" target="_blank">'+esc(val)+'</a>' : esc(val);
+  }
+  sf('dfEmail','dvEmail',c.email,c.email?'mailto:'+c.email:null);
+  sf('dfPhone','dvPhone',c.phone,c.phone?'tel:'+c.phone:null);
+  sf('dfCompany','dvCompany',c.company,null);
+  sf('dfTitle','dvTitle',c.title,null);
+  sf('dfIndustry','dvIndustry',c.industry,null);
+  sf('dfWebsite','dvWebsite',c.website,c.website?ensureHttp(c.website):null);
+  sf('dfLinkedin','dvLinkedin',c.linkedin,c.linkedin?ensureHttp(c.linkedin):null);
+  sf('dfAddress','dvAddress',c.address,null);
+  sf('dfNotes','dvNotes',c.notes,null);
+  var howMet = c.how_met||''; if(c.how_met==='Other'&&c.how_met_other) howMet=c.how_met_other;
+  sf('dfHowMet','dvHowMet',howMet,null);
+
+  var added = c.date_added ? new Date(c.date_added).toLocaleDateString() : '—';
+  var updated = c.last_updated ? new Date(c.last_updated).toLocaleDateString() : '—';
+  document.getElementById('detailMeta').innerHTML = 'Added: '+added+' &nbsp;·&nbsp; Last Updated: '+updated+(c.source?' &nbsp;·&nbsp; Source: '+esc(c.source):'');
+  dv.scrollIntoView({behavior:'smooth'});
+}
+
+function openDetailAndEdit(id) { openDetail(id); setTimeout(editContact, 100); }
+
+function closeDetail() {
+  document.getElementById('listView').style.display='';
+  document.getElementById('detailView').style.display='none';
+  currentContact = null;
+}
+
+function editContact() {
+  if (!currentContact) return;
+  var c = currentContact;
+  pendingExtracted = { source: c.source };
+  document.getElementById('pFirstName').value=c.first_name||'';
+  document.getElementById('pLastName').value=c.last_name||'';
+  document.getElementById('pCompany').value=c.company||'';
+  document.getElementById('pTitle').value=c.title||'';
+  document.getElementById('pIndustry').value=c.industry||'';
+  document.getElementById('pEmail').value=c.email||'';
+  document.getElementById('pPhone').value=c.phone||'';
+  document.getElementById('pWebsite').value=c.website||'';
+  document.getElementById('pLinkedin').value=c.linkedin||'';
+  document.getElementById('pAddress').value=c.address||'';
+  document.getElementById('pNotes').value=c.notes||'';
+  document.getElementById('pHowMet').value=c.how_met||'';
+  document.getElementById('pHowMetOther').value=c.how_met_other||'';
+  toggleHowMetOther(); updatePreviewHeader();
+  document.getElementById('previewSource').textContent='Editing';
+  var btn = document.getElementById('saveBtn');
+  btn.textContent = '✅ Update Contact';
+  btn.onclick = updateCurrentContact;
+  showTab('capture');
+  document.getElementById('previewCard').style.display='block';
+  document.getElementById('previewCard').scrollIntoView({behavior:'smooth'});
+}
+
+function updateCurrentContact() {
+  if (!currentContact) return;
+  var contact = collectPreviewFields();
+  showLoading('Updating...');
+  window._fbUpdate(currentContact.id, contact, function(err) {
+    hideLoading();
+    if (err) { showToast('Update failed','error'); return; }
+    showToast('Contact updated ✓','success');
+    hidePreview();
+    var btn = document.getElementById('saveBtn');
+    btn.textContent='✅ Save Contact'; btn.onclick=saveContact;
+    currentContact=null; loadContacts();
+  });
+}
+
+function deleteContact() { if (currentContact) deleteById(currentContact.id, true); }
+
+function deleteById(id, fromDetail) {
+  if (!confirm('Delete this contact? Cannot be undone.')) return;
+  showLoading('Deleting...');
+  window._fbDelete(id, function(err) {
+    hideLoading();
+    if (err) { showToast('Delete failed','error'); return; }
+    showToast('Contact deleted','warning');
+    if (fromDetail) closeDetail();
+    loadContacts();
+  });
+}
+
+// ─── VCARD ───
+function downloadVCard() { if (currentContact) downloadVCardById(currentContact.id); }
+function downloadVCardById(id) {
+  var c = allContacts.find(function(x){return x.id===id;});
+  if (!c) return;
+  var lines = ['BEGIN:VCARD','VERSION:3.0'];
+  lines.push('N:'+(c.last_name||'')+';'+(c.first_name||'')+';;;');
+  lines.push('FN:'+(((c.first_name||'')+' '+(c.last_name||'')).trim()));
+  if(c.company) lines.push('ORG:'+c.company);
+  if(c.title) lines.push('TITLE:'+c.title);
+  if(c.email) lines.push('EMAIL;type=INTERNET;type=WORK:'+c.email);
+  if(c.phone) lines.push('TEL;type=WORK:'+c.phone);
+  if(c.website) lines.push('URL:'+c.website);
+  if(c.address) lines.push('ADR;type=WORK:;;'+c.address+';;;;');
+  if(c.notes) lines.push('NOTE:'+c.notes);
+  lines.push('END:VCARD');
+  var blob = new Blob([lines.join('\r\n')],{type:'text/vcard'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href=url; a.download=((c.first_name||'')+'_'+(c.last_name||'')).trim().replace(/\s+/g,'_')+'.vcf';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('vCard downloaded ✓','success');
+}
+
+// ─── EXPORT ───
+function renderExportStats() {
+  var el = document.getElementById('exportStats');
+  if (!allContacts.length) { el.innerHTML='<p class="text-muted">No contacts yet.</p>'; return; }
+  var bySource={};
+  allContacts.forEach(function(c){ var s=c.source||'Unknown'; bySource[s]=(bySource[s]||0)+1; });
+  var rows=Object.keys(bySource).map(function(s){ return '<tr><td style="padding:4px 12px 4px 0;color:var(--text2)">'+esc(s)+'</td><td style="color:var(--blue-light)">'+bySource[s]+'</td></tr>'; }).join('');
+  el.innerHTML='<p style="margin-bottom:10px;color:var(--text2)"><strong>'+allContacts.length+' total contacts</strong></p><table>'+rows+'</table>';
+}
+
+function exportToExcel() {
+  if (!allContacts.length) { showToast('No contacts to export','warning'); return; }
+  var headers=['First Name','Last Name','Company','Title','Industry','Email','Phone','Website','LinkedIn','Address','How Met','Notes','Source','Date Added','Last Updated'];
+  var rows = allContacts.map(function(c) {
+    var howMet=c.how_met||''; if(c.how_met==='Other'&&c.how_met_other) howMet=c.how_met_other;
+    return [c.first_name||'',c.last_name||'',c.company||'',c.title||'',c.industry||'',c.email||'',c.phone||'',c.website||'',c.linkedin||'',c.address||'',howMet,c.notes||'',c.source||'',
+      c.date_added?new Date(c.date_added).toLocaleDateString():'',
+      c.last_updated?new Date(c.last_updated).toLocaleDateString():''];
+  });
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet([headers].concat(rows));
+  ws['!cols']=[{wch:14},{wch:16},{wch:24},{wch:22},{wch:18},{wch:28},{wch:16},{wch:24},{wch:28},{wch:32},{wch:20},{wch:32},{wch:14},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Contacts');
+  XLSX.writeFile(wb,'ContactVault_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Excel file downloaded ✓','success');
+}
+
+// ─── DEV ───
+function loadDevConfig() {
+  document.getElementById('cfgAnthropicKey').value = anthropicKey;
+  var el = document.getElementById('statusAnthropicKey');
+  el.textContent = anthropicKey ? '✓ Set' : '○ Not set';
+  el.className = 'config-status ' + (anthropicKey ? 'ok' : 'missing');
+  renderDevStats();
+}
+
+function saveConfig() {
+  anthropicKey = document.getElementById('cfgAnthropicKey').value.trim();
+  localStorage.setItem(ANTHROPIC_KEY_STORAGE, anthropicKey);
+  window.anthropicKey = anthropicKey;
+  var el = document.getElementById('statusAnthropicKey');
+  el.textContent = anthropicKey ? '✓ Set' : '○ Not set';
+  el.className = 'config-status ' + (anthropicKey ? 'ok' : 'missing');
+  showToast('Configuration saved ✓','success');
+}
+
+function renderDevStats() {
+  var el = document.getElementById('devStats');
+  if (!allContacts.length) { el.textContent='No contacts in database.'; return; }
+  el.innerHTML='Total contacts: <strong style="color:var(--blue-light)">'+allContacts.length+'</strong><br>'+
+    'With email: <strong style="color:var(--blue-light)">'+allContacts.filter(function(c){return c.email;}).length+'</strong><br>'+
+    'With phone: <strong style="color:var(--blue-light)">'+allContacts.filter(function(c){return c.phone;}).length+'</strong>';
+}
+
+function nukeDatabase() {
+  if (!confirm('DELETE ALL CONTACTS? This is permanent.')) return;
+  if (!confirm('Are you absolutely sure? All '+allContacts.length+' contacts will be gone.')) return;
+  showLoading('Deleting all contacts...');
+  window._fbDeleteAll(function(err) {
+    hideLoading();
+    if (err) { showToast('Delete failed','error'); return; }
+    allContacts=[];
+    document.getElementById('headerCount').textContent='0 contacts';
+    showToast('All contacts deleted','error');
+  });
+}
+
+// ─── UTILS ───
+function showLoading(msg) { document.getElementById('loadingText').textContent=msg||'Loading...'; document.getElementById('loadingOverlay').classList.add('show'); }
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
+function showToast(msg, type) {
+  var t=document.getElementById('toast'); t.textContent=msg;
+  t.className='toast'+(type?' '+type:''); t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},3000);
+}
+function esc(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function ensureHttp(url) { return url.match(/^https?:\/\//) ? url : 'https://'+url; }
+</script>
+</body>
+</html>
